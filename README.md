@@ -7,7 +7,7 @@ http://arxiv.org/abs/1512.09300
 
 input :
 
-64*64*1 Grayscale image in **tfrecord** format.
+64×64×1 Grayscale image in **tfrecord** format.
 
 batch size = 128;
 
