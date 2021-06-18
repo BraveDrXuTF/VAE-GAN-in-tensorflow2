@@ -14,6 +14,6 @@ batch size = 128;
 I added a new idea in this code which did not appear in the original paper,it is called **"weighted loss"**,which performed well in my task.
 
 
-Get more information at my blog:
+Get more information in my blog:
 
 https://blog.csdn.net/qq_44065334/article/details/117982502
