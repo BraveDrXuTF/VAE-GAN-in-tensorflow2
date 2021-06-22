@@ -1,5 +1,5 @@
 # VAE-GAN-in-tensorflow2
-## an implementation of VAE-GAN in tensorflow2
+## An implementation of VAE-GAN in tensorflow2
 
 original paper:
 
