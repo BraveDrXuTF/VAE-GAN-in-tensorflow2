@@ -18,7 +18,6 @@ from tensorflow.keras.layers import Conv2D, Flatten, Lambda
 from tensorflow.keras.layers import Reshape, Conv2DTranspose
 from tensorflow.keras.models import Model
 from tensorflow.keras.callbacks import Callback
-# from tensorflow.keras.datasets import mnist
 from tensorflow.keras.losses import mse, binary_crossentropy
 from tensorflow.keras.utils import plot_model
 from tensorflow.keras import backend as K
@@ -158,7 +157,6 @@ image_list_dataset = tf.data.Dataset.from_tensor_slices(tfrecord_list)
 parsed_image_dataset = image_list_dataset.interleave(lambda x: tf.data.TFRecordDataset(x).map(_parse_image_function),
     cycle_length=4)
 
-# parsed_image_dataset = tf.data.TFRecordDataset(tfrecord_list)
 
 
 batch_size = 128
@@ -167,9 +165,7 @@ batch_num = 1302
 parsed_image_dataset = parsed_image_dataset.map(parse_imagestr2numpy)
 
 parsed_image_dataset = parsed_image_dataset.batch(128)
-# train_data = parsed_image_dataset.take(1000)
-# test_data = parsed_image_dataset.skip(1000)
-# network parameters
+
 input_shape = (image_size, image_size, 1)
 
 kernel_size = 3
@@ -211,12 +207,7 @@ def build_encoder(filters=32):
                 activation=None,
                 strides=1,
                 padding='same', name='z_log_var')(x)
-    # z_mean = Dense(latent_dim, name='z_mean')(x)
-    # z_log_var = Dense(latent_dim, name='z_log_var')(x)
 
-    # use reparameterization trick to push the sampling out as input
-    # note that "output_shape" isn't necessary 
-    # with the TensorFlow backend
     z = Lambda(sampling,
             output_shape=(shape[1],shape[2],1), 
             name='z')([z_mean, z_log_var])
@@ -345,48 +336,11 @@ class VAE_GAN(keras.Model):
         reconstructed_img = self.generator(z)
         return reconstructed_img
 
-# with strategy.scope():
-#     generator=Generator()
-#     disc=discriminator_model()
-# with strategy.scope():
-#     cycle_gan_model = CycleGan(
-#         generator,disc
-#     )
 
-#     cycle_gan_model.compile(
-#         gen_optimizer = generator_optimizer,
-#         disc_optimizer = discriminator_optimizer,
-#         gen_loss_function = gen_loss,
-#         disc_loss_function = disc_loss1,
-#     )
-
-#         encoder_optimizer,
-#         generator_optimizer,
-#         discriminator_optimizer,
-#         reconstructed_loss,
-#         kl_loss,
-#         discriminator_loss
-# z_mean, z_log_var, z = self.encoder(real_img, training=True)
-# reconstructed_img = self.generator(z, training=True)
-# generated_img = self.generator(gen_z, training=True)
-# reconstruction_loss = self.reconstructed_loss(real_img,reconstructed_img)
-# kl_loss = self.kl_loss(z_mean,z_log_var)
-# discriminator_loss = self.discriminator_loss(real_img,reconstructed_img,generated_img)
 encoder_optimizer = tf.keras.optimizers.RMSprop()
 generator_optimizer = tf.keras.optimizers.RMSprop()
 discriminator_optimizer = tf.keras.optimizers.RMSprop()
-# 这个采用weighted的想法非常新颖，但是我先不采用
-# def reconstructed_loss(real_img,reconstructed_img):
-#     reconstructed_img = K.flatten(reconstructed_img)
-#     real_img = K.flatten(real_img)
-#     img_difference = tf.square(reconstructed_img-real_img)
-#     weighted_img_difference = tf.multiply(img_difference,1+real_img)
-#     return K.sum(weighted_img_difference,axis=-1)
-# # 这是native mse版本，当然，这里没有求平均
-# def reconstructed_loss(real_img,reconstructed_img):
-#     return image_size*image_size*mse(K.flatten(real_img), K.flatten(reconstructed_img))
 
-# 这个采用weighted的想法非常新颖，但是我先不采用
 def reconstructed_loss(real_img,reconstructed_img):
     reconstructed_img = K.flatten(reconstructed_img)
     real_img = K.flatten(real_img) # 显示shape为(None,)
@@ -415,17 +369,7 @@ def gen_about_discriminator_loss(reconstructed_output,generated_output):
     loss2 = keras.losses.BinaryCrossentropy(from_logits=True,reduction=tf.keras.losses.Reduction.NONE)(tf.ones_like(reconstructed_output),reconstructed_output)
     loss3 = keras.losses.BinaryCrossentropy(from_logits=True,reduction=tf.keras.losses.Reduction.NONE)(tf.ones_like(generated_output),generated_output) 
     return loss2 + loss3   
-    # if args.bce:
-    #     reconstruction_loss = binary_crossentropy(K.flatten(inputs),
-    #                                               K.flatten(outputs))
-    # else:
-    #     reconstruction_loss = mse(K.flatten(inputs), K.flatten(outputs))
 
-    # reconstruction_loss *= image_size * image_size
-    # kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
-    # kl_loss = K.sum(kl_loss, axis=-1)
-    # kl_loss *= -0.5
-    # vae_loss = K.mean(reconstruction_loss + kl_loss)
 
 
 
@@ -477,67 +421,5 @@ class MyepochsaveCallback(Callback):
 if __name__ == '__main__':
     a128batch=parsed_image_dataset.take(1)
     a128batch_list = list(a128batch.as_numpy_iterator())
-    # parser = argparse.ArgumentParser()
-    # help_ = "Load tf model trained weights"
-    # parser.add_argument("--weights",help=help_)
-    # help_ = "Use binary cross entropy instead of mse (default)"
-    # parser.add_argument("--bce", help=help_, action='store_true')
-    # parser.add_argument("--cp2", help=help_)
-    # parser.add_argument("--cpz2", help=help_)
-    # parser.add_argument("--cpz2LC", help=help_)
-    # parser.add_argument("--train", action='store_true')
-    # args = parser.parse_args()
-
-    # if not os.path.isdir(save_dir):
-    #     os.makedirs(save_dir)
-    # if args.weights:
-    #     filepath = os.path.join(save_dir, args.weights)
-    #     vae.load_weights(filepath)
-    #     # # 查看前128张图片的训练效果
-    #     a128batch=parsed_image_dataset.take(1)
-    #     a128batch_list = list(a128batch.as_numpy_iterator())
-    #     testresult=vae.predict(a128batch)
-    #     testresult = np.squeeze(testresult)
-    #     digit_size = 64
-    #     row = 2
-    #     col = 10
-    #     figure = np.zeros((digit_size * row, digit_size * col))
-    #     for i in range(col):
-    #         # import pdb
-    #         # pdb.set_trace()
-    #         figure[0:digit_size,i * digit_size: (i + 1) * digit_size] = a128batch_list[0][i+10]
-    #         figure[1*digit_size:2*digit_size,i * digit_size: (i + 1) * digit_size] = testresult[i+10]
-    #     plt.figure(figsize=(15, 15))
-    #     plt.imshow(figure, cmap='Greys_r')
-    #     plt.savefig('try_C3_epoch200.jpg')
-    #     plt.close()
-    #         # for j in range(row):
-    #         #     figure[j * digit_size: (j + 1) * digit_size,
-    #         #        i * digit_size: (i + 1) * digit_size] = digit
-    # else:
-    #     # train the autoencoder
-    #     if args.cp2:
-    #         filepath = os.path.join(save_dir, args.cp)
-    #         vae.load_weights(filepath)
-    #         vae.fit(parsed_image_dataset,epochs=epochs,callbacks=[MyPlotCallback(models),MyepochsaveCallback(save_dir,vae)])
-    #         filepath = 'vae_jiajin_16w.h5'
-    #         vae.save_weights(filepath)
-        
-    #     elif args.cpz2:
-    #         filepath = os.path.join(save_dir, args.cpz2)
-    #         vae.load_weights(filepath)
-    #         vae.fit(parsed_image_dataset,epochs=epochs,callbacks=[MyPlotCallbackz2(models),MyepochsaveCallback(save_dir,vae)])
-    #         filepath = 'vae_jiajin_16wLC.h5'
-    #         vae.save_weights(filepath)
-    #     elif args.cpz2LC:
-    #         filepath = os.path.join(save_dir, args.cpz2LC)
-    #         vae.load_weights(filepath)
-    #         vae.fit(parsed_image_dataset,epochs=epochs,callbacks=[MyPlotCallbackz2(models),MyepochsaveCallback(save_dir,vae)])
-    #         filepath = 'vae_jiajin_16wGAN614.h5'
-    #         vae.save_weights(filepath)
-    #     elif args.train:
-    #         vae.fit(parsed_image_dataset,epochs=epochs,callbacks=[MyPlotCallbackz2(models),MyepochsaveCallback(save_dir,vae)])
-    #         filepath = 'vae_jiajin_16wGAN614.h5'
-    #         vae.save_weights(filepath)
     save_dir='./vae_cnn_weights'
     vae_gan_instance.fit(parsed_image_dataset,epochs=epochs,callbacks=[MyPlotCallback_test(vae_gan_instance,a128batch),MyepochsaveCallback(save_dir,vae_gan_instance)])
